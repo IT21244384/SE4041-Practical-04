@@ -1,0 +1,79 @@
+name: Build, test and capture Simulator screenshots
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  ios:
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Generate Xcode project
+        working-directory: MarksApp
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Boot an iPhone Simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          ios = sorted((k for k in devices if "iOS" in k), reverse=True)
+          for preferred in ("iPhone 16", "iPhone 15", "iPhone"):
+              for runtime in ios:
+                  for d in devices[runtime]:
+                      if d["name"].startswith(preferred) and "Pro" not in d["name"] and "Plus" not in d["name"]:
+                          print(d["udid"]); sys.exit()
+          ')
+          echo "Using simulator $UDID"
+          xcrun simctl list devices | grep "$UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$UDID"
+          # Skip the first-use keyboard tutorial so it does not cover the app during UI tests
+          xcrun simctl spawn "$UDID" defaults write com.apple.keyboard.preferences DidShowContinuousPathIntroduction -bool true || true
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl status_bar "$UDID" override --time "9:41" --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3
+
+      - name: Build app and run UI tests
+        working-directory: MarksApp
+        run: |
+          set -o pipefail
+          mkdir -p "$GITHUB_WORKSPACE/screenshots"
+          TEST_RUNNER_SCREENSHOT_DIR="$GITHUB_WORKSPACE/screenshots" \
+          xcodebuild test \
+            -project MarksApp.xcodeproj \
+            -scheme MarksApp \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            -resultBundlePath "$GITHUB_WORKSPACE/TestResults.xcresult" \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee "$GITHUB_WORKSPACE/xcodebuild.log" | grep -E "error:|warning:|Test Case|Executed|\*\* (BUILD|TEST)"
+
+      - name: Export screenshots from the test results if needed
+        if: always()
+        run: |
+          if [ -z "$(ls -A screenshots 2>/dev/null)" ] && [ -d TestResults.xcresult ]; then
+            xcrun xcresulttool export attachments --path TestResults.xcresult --output-path exported || true
+            ls -la exported || true
+          fi
+          ls -la screenshots
+
+      - name: Upload Xcode project, screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: practical04-output
+          path: |
+            MarksApp/MarksApp.xcodeproj
+            screenshots
+            exported
+            xcodebuild.log
+          if-no-files-found: warn

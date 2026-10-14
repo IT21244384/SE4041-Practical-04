@@ -1307,3 +1307,35 @@ You have created and run an Xcode project, designed interfaces using views and s
 
 The Student Marks App combines these concepts into a small application that accepts input, validates data, displays student results, and updates its interface as data changes.
 
+
+---
+
+## Student Submission
+
+| | |
+|---|---|
+| **Student Name** | Abisheak S |
+| **Student ID** | IT21244384 |
+| **App** | `MarksApp/` – SE4041 Marks (SwiftUI, iOS 17+) |
+
+### Project contents
+
+| Path | Content |
+|---|---|
+| `MarksApp/MarksApp.xcodeproj` | Xcode project – open this in Xcode and press Run |
+| `MarksApp/MarksApp/MarksAppApp.swift` | App entry point (`@main`, `WindowGroup`) |
+| `MarksApp/MarksApp/ContentView.swift` | Final task – input form, validation, passed count, student list, `StudentRow` subview |
+| `MarksApp/MarksApp/Student.swift` | `Student` model (`Identifiable`, computed `passed` and `grade`) |
+| `MarksApp/MarksApp/StudentDetailView.swift` | Detail screen with SF Symbol, mark, pass/fail and grade |
+| `MarksApp/MarksApp/Exercises/` | Exercises 01–08 and the mini activity as separate views with previews, plus Knowledge Check answers |
+| `MarksApp/MarksAppUITests/` | UI tests covering Tests 1–8 from the testing section; they also capture the screenshots |
+| `MarksApp/project.yml` | XcodeGen spec the project was generated from |
+
+### Environment
+
+The code was written on Windows. It was built with Xcode and run in the iOS Simulator on a macOS runner (GitHub Actions, `.github/workflows/ios.yml`). The UI tests enter the students, tap through the screens and take the screenshots from the running Simulator.
+
+## My Practical Evidence
+
+![Student list](screenshots/01-Student-List.png)
+![Student details](screenshots/02-Student-Details.png)
