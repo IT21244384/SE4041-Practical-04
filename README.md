@@ -1339,3 +1339,6 @@ The code was written on Windows. It was built with Xcode and run in the iOS Simu
 
 ![Student list](screenshots/01-Student-List.png)
 ![Student details](screenshots/02-Student-Details.png)
+![Failing student details](screenshots/03-Student-Details-Fail.png)
+
+UI test run on the iPhone 16e Simulator (iOS 26.2): 4 tests, 0 failures - covering Tests 1-8 of the testing section.
